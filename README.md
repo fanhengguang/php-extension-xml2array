@@ -22,6 +22,82 @@ sudo make install
 4
 5 $ret = xml2array($content);
 6 var_dump($ret);
+
+```
+xml 内容为：
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+    <xx>
+        <id>3</id>
+        <id>4</id>
+        <ee>
+            <rr>444</rr>
+        </ee>
+    </xx>
+
+    <xx>
+        <ee>
+            <rr>444</rr>
+            <rr>444</rr>
+        </ee>
+        <ee>
+            <rr>444</rr>
+        </ee>
+    </xx>
+</root>
+
+```
+
+
+输出如下：
+
+```
+array(1) {
+  ["root"]=>
+  array(1) {
+    ["xx"]=>
+    array(2) {
+      [0]=>
+      array(2) {
+        ["id"]=>
+        array(2) {
+          [0]=>
+          string(1) "3"
+          [1]=>
+          string(1) "4"
+        }
+        ["ee"]=>
+        array(1) {
+          ["rr"]=>
+          string(3) "444"
+        }
+      }
+      [1]=>
+      array(1) {
+        ["ee"]=>
+        array(2) {
+          [0]=>
+          array(1) {
+            ["rr"]=>
+            array(2) {
+              [0]=>
+              string(3) "444"
+              [1]=>
+              string(3) "444"
+            }
+          }
+          [1]=>
+          array(1) {
+            ["rr"]=>
+            string(3) "444"
+          }
+        }
+      }
+    }
+  }
+}
 ```
 
 
