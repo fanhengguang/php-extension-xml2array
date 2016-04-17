@@ -30,9 +30,9 @@
 
 #include <libxml/parser.h>
 #include <libxml/tree.h>
-static zval * php_xml2array_loop(xmlNode *node, int is_root);
+static zval * php_xml2array_loop(xmlNode *node);
 static void php_xml2array_parse(zval* return_value, char * xml_str);
-static void php_xml2array_add_val (zval *ret,const xmlChar *name, zval *r, char *son_key, int is_root);
+static void php_xml2array_add_val (zval *ret,const xmlChar *name, zval *r, char *son_key);
 static void php_xml2array_get_properties (xmlNodePtr cur_node, zval * nodes, char *name);
 static zval * init_zval_array();
 /* If you declare any globals in php_xml2array.h uncomment this:
@@ -182,7 +182,7 @@ static void php_xml2array_parse(zval* return_value, char * xml_str) {
 	} else {
 		root_element = xmlDocGetRootElement(doc);
 		zval *z;
-		z = (zval *) php_xml2array_loop(root_element, 1);
+		z = (zval *) php_xml2array_loop(root_element);
 
 		*return_value = *z;
 
@@ -194,19 +194,18 @@ static void php_xml2array_parse(zval* return_value, char * xml_str) {
 }
 
 
-static zval* php_xml2array_loop(xmlNodePtr a_node, int is_root) {
+static zval* php_xml2array_loop(xmlNodePtr a_node) {
 
 	xmlNodePtr cur_node;
 	zval * ret  = init_zval_array();
 	zval *r;
 	int i =0;
 
-	//for ((cur_node = (is_root) ? a_node->children : a_node); cur_node; cur_node = cur_node->next) {
 	for (cur_node = a_node->children; cur_node; cur_node = cur_node->next) {
 		char *cur_name = NULL;
 		if (cur_node->type == XML_ELEMENT_NODE) {
 			cur_name = (char*)cur_node->name;
-			r =  php_xml2array_loop(cur_node, 0);
+			r =  php_xml2array_loop(cur_node);
 			php_xml2array_get_properties (cur_node, r, cur_name);
 		} else if (cur_node->type == XML_CDATA_SECTION_NODE || cur_node->type == XML_TEXT_NODE) {
 			MAKE_STD_ZVAL(r);
@@ -215,7 +214,7 @@ static zval* php_xml2array_loop(xmlNodePtr a_node, int is_root) {
 			xmlFree(z);
 		}
 
-		php_xml2array_add_val(ret, a_node->name, r, cur_name, is_root);
+		php_xml2array_add_val(ret, a_node->name, r, cur_name);
 	}
 
 	return ret;
@@ -271,7 +270,7 @@ static void php_xml2array_get_properties (xmlNodePtr cur_node, zval * nodes, cha
  * @r 子zval
  * @son_name 子name
  */
-static void php_xml2array_add_val (zval *ret,const xmlChar *name, zval *r, char *son_key, int is_root) {
+static void php_xml2array_add_val (zval *ret,const xmlChar *name, zval *r, char *son_key) {
 	zval **tmp = NULL;
 	char *key = (char *)name;//要插入的node 的key
 
@@ -283,8 +282,8 @@ static void php_xml2array_add_val (zval *ret,const xmlChar *name, zval *r, char 
 		zval **tmp_val = NULL;
 		zend_hash_internal_pointer_reset(Z_ARRVAL_P(*tmp));
 		if (zend_symtable_find(Z_ARRVAL_P(*tmp),  son_key , strlen(son_key)+1, (void**)&tmp_val) != FAILURE) {//已经包含同名子元素
-			if (Z_TYPE_PP(tmp)  == IS_ARRAY && zend_hash_index_exists(Z_ARRVAL_PP(tmp), 0)) {//之前已经存储同名子zval
-				add_next_index_zval(*tmp, *son_val);
+			if (Z_TYPE_PP(tmp_val)  == IS_ARRAY && zend_hash_index_exists(Z_ARRVAL_PP(tmp_val), 0)) {//之前已经存储同名子zval
+				add_next_index_zval(*tmp_val, *son_val);
 			} else {//首次添加此名称的子zval
 				zval *son_arr = init_zval_array();
 				zval *copy;
