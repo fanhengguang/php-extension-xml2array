@@ -31,7 +31,7 @@
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 static zval * php_xml2array_loop(xmlNode *node);
-static void php_xml2array_parse(zval* return_value, char * xml_str);
+static void php_xml2array_parse(zval* return_value, char * xml_str, long xml_len);
 static void php_xml2array_add_val (zval *ret,const xmlChar *name, zval *r, char *son_key);
 static void php_xml2array_get_properties (xmlNodePtr cur_node, zval * nodes, char *name);
 static zval * init_zval_array();
@@ -166,15 +166,15 @@ PHP_FUNCTION(xml2array)
 		return;
 	}
 
-	php_xml2array_parse(return_value, arg);
+	php_xml2array_parse(return_value, arg, arg_len);
 }
 
 
 
-static void php_xml2array_parse(zval* return_value, char * xml_str) {
+static void php_xml2array_parse(zval* return_value, char * xml_str, long xml_len) {
 
 	xmlKeepBlanksDefault(0);
-	xmlDoc *doc = xmlRecoverDoc(xml_str);
+	xmlDoc *doc = xmlParseMemory(xml_str, xml_len);
 	xmlNode *root_element;
 
 	if (doc == NULL) {
@@ -201,20 +201,26 @@ static zval* php_xml2array_loop(xmlNodePtr a_node) {
 	zval *r;
 	int i =0;
 
-	for (cur_node = a_node->children; cur_node; cur_node = cur_node->next) {
-		char *cur_name = NULL;
-		if (cur_node->type == XML_ELEMENT_NODE) {
-			cur_name = (char*)cur_node->name;
-			r =  php_xml2array_loop(cur_node);
-			php_xml2array_get_properties (cur_node, r, cur_name);
-		} else if (cur_node->type == XML_CDATA_SECTION_NODE || cur_node->type == XML_TEXT_NODE) {
-			MAKE_STD_ZVAL(r);
-			xmlChar *z = xmlNodeGetContent(cur_node);
-			ZVAL_STRING(r, z, 1);
-			xmlFree(z);
-		}
+	if (a_node->children == NULL) {
+		MAKE_STD_ZVAL(r);
+		ZVAL_STRING(r, "", 1);
+		php_xml2array_add_val(ret, a_node->name, r, NULL);
+	} else {
+		for (cur_node = a_node->children; cur_node; cur_node = cur_node->next) {
+			char *cur_name = NULL;
+			if (cur_node->type == XML_ELEMENT_NODE) {
+				cur_name = (char*)cur_node->name;
+				r =  php_xml2array_loop(cur_node);
+				php_xml2array_get_properties (cur_node, r, cur_name);
+			} else if (cur_node->type == XML_CDATA_SECTION_NODE || cur_node->type == XML_TEXT_NODE) {
+				MAKE_STD_ZVAL(r);
+				xmlChar *z = xmlNodeGetContent(cur_node);
+				ZVAL_STRING(r, z, 1);
+				xmlFree(z);
+			}
 
-		php_xml2array_add_val(ret, a_node->name, r, cur_name);
+			php_xml2array_add_val(ret, a_node->name, r, cur_name);
+		}
 	}
 
 	return ret;
