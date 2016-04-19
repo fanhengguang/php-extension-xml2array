@@ -222,7 +222,6 @@ static zval* php_xml2array_loop(xmlNodePtr a_node) {
 			php_xml2array_add_val(ret, a_node->name, r, cur_name);
 		}
 	}
-
 	return ret;
 }
 
@@ -280,13 +279,15 @@ static void php_xml2array_add_val (zval *ret,const xmlChar *name, zval *r, char 
 	zval **tmp = NULL;
 	char *key = (char *)name;//要插入的node 的key
 
-	zend_hash_internal_pointer_reset(Z_ARRVAL(*ret));
 	if(son_key != NULL && zend_symtable_find(Z_ARRVAL(*ret),  key, strlen(key) + 1, (void**)&tmp) != FAILURE) {
 		zval **son_val = NULL;
 		zend_symtable_find(Z_ARRVAL_P(r),  son_key , strlen(son_key)+1, (void**)&son_val);
 
+		zval *son_val_copy;
+		MAKE_STD_ZVAL(son_val_copy);
+		MAKE_COPY_ZVAL(son_val, son_val_copy);
+
 		zval **tmp_val = NULL;
-		zend_hash_internal_pointer_reset(Z_ARRVAL_P(*tmp));
 		if (zend_symtable_find(Z_ARRVAL_P(*tmp),  son_key , strlen(son_key)+1, (void**)&tmp_val) != FAILURE) {//已经包含同名子元素
 			if (Z_TYPE_PP(tmp_val)  == IS_ARRAY && zend_hash_index_exists(Z_ARRVAL_PP(tmp_val), 0)) {//之前已经存储同名子zval
 				add_next_index_zval(*tmp_val, *son_val);
@@ -294,17 +295,15 @@ static void php_xml2array_add_val (zval *ret,const xmlChar *name, zval *r, char 
 				zval *son_arr = init_zval_array();
 				zval *copy;
 				MAKE_STD_ZVAL(copy);
-				MAKE_COPY_ZVAL(tmp_val, copy);//此处可能会产生内存泄漏
+				MAKE_COPY_ZVAL(tmp_val, copy);
 				add_next_index_zval(son_arr, copy);
 				add_next_index_zval(son_arr, *son_val);
 				zend_symtable_update(Z_ARRVAL_PP(tmp), son_key, strlen(son_key)+1, (void *) &son_arr, sizeof(zval *), NULL);
 			}
-
 		} else {
-			add_assoc_zval(*tmp, son_key, *son_val);
-
+			add_assoc_zval(*tmp, son_key, son_val_copy);
+			zval_ptr_dtor(&r);//accept a zval** param
 		}
-		return;
 	} else {
 		add_assoc_zval(ret, key, r);
 	}
