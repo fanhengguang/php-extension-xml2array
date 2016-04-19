@@ -290,20 +290,20 @@ static void php_xml2array_add_val (zval *ret,const xmlChar *name, zval *r, char 
 		zval **tmp_val = NULL;
 		if (zend_symtable_find(Z_ARRVAL_P(*tmp),  son_key , strlen(son_key)+1, (void**)&tmp_val) != FAILURE) {//已经包含同名子元素
 			if (Z_TYPE_PP(tmp_val)  == IS_ARRAY && zend_hash_index_exists(Z_ARRVAL_PP(tmp_val), 0)) {//之前已经存储同名子zval
-				add_next_index_zval(*tmp_val, *son_val);
+				add_next_index_zval(*tmp_val, son_val_copy);
 			} else {//首次添加此名称的子zval
 				zval *son_arr = init_zval_array();
 				zval *copy;
 				MAKE_STD_ZVAL(copy);
 				MAKE_COPY_ZVAL(tmp_val, copy);
 				add_next_index_zval(son_arr, copy);
-				add_next_index_zval(son_arr, *son_val);
+				add_next_index_zval(son_arr, son_val_copy);
 				zend_symtable_update(Z_ARRVAL_PP(tmp), son_key, strlen(son_key)+1, (void *) &son_arr, sizeof(zval *), NULL);
 			}
 		} else {
 			add_assoc_zval(*tmp, son_key, son_val_copy);
-			zval_ptr_dtor(&r);//accept a zval** param
 		}
+		zval_ptr_dtor(&r);//accept a zval** param
 	} else {
 		add_assoc_zval(ret, key, r);
 	}
