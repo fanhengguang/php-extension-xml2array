@@ -242,15 +242,15 @@ static void php_xml2array_get_properties (xmlNodePtr cur_node, zval * nodes, cha
 		if (zend_symtable_find(Z_ARRVAL_P(nodes),  name, strlen(name) + 1, (void**)&tmp) == FAILURE) {
 			return;//this should not happen
 		}
-
+		zval *target = *tmp;
 		if (Z_TYPE_PP(tmp) != IS_ARRAY) {
 			zval *value_zval = init_zval_array();
-			add_assoc_zval(value_zval, "value", *tmp);
+			target = value_zval;
+			zval *copy;
+			MAKE_STD_ZVAL(copy);
+			MAKE_COPY_ZVAL(tmp, copy);
+			add_assoc_zval(value_zval, "value", copy);
 			zend_symtable_update(Z_ARRVAL_P(nodes), name, strlen(name)+1, (void *) &value_zval, sizeof(zval *), NULL);
-		}
-
-		if (zend_symtable_find(Z_ARRVAL_P(nodes),  name, strlen(name) + 1, (void**)&tmp) == FAILURE) {
-			return;//this should not happen
 		}
 
 		for(attr = cur_node->properties; NULL != attr; attr = attr->next) {
@@ -260,10 +260,9 @@ static void php_xml2array_get_properties (xmlNodePtr cur_node, zval * nodes, cha
 			zval *attr_zval;
 			MAKE_STD_ZVAL(attr_zval);
 			ZVAL_STRING(attr_zval, prop, 1);
-			zend_symtable_update(Z_ARRVAL_PP(tmp), attr_name, strlen(attr_name)+1, (void *) &attr_zval, sizeof(zval *), NULL);
+			zend_symtable_update(Z_ARRVAL_P(target), attr_name, strlen(attr_name)+1, (void *) &attr_zval, sizeof(zval *), NULL);
 			xmlFree(prop);
 		}
-
 	}
 }
 
