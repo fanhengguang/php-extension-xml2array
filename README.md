@@ -1,6 +1,7 @@
-# php xml2array by php extension
+# php xml2array(xml to array) by php extension
 
-php xml2array php 扩展实现， 即通过扩展的方式实现xml转换为array
+this is a php extension for xml2array(xml to array)。 
+ php xml to array 扩展实现， 即通过扩展的方式实现xml转换为array
 
 ## 版本
 适用于php5
