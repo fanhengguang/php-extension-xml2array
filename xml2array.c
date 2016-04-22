@@ -159,7 +159,7 @@ PHP_MINFO_FUNCTION(xml2array)
 PHP_FUNCTION(xml2array)
 {
 	char *arg = NULL;
-	int arg_len;
+	long arg_len;
 	char *strg;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &arg, &arg_len) == FAILURE) {
