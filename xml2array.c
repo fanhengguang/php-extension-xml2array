@@ -217,9 +217,13 @@ static zval* php_xml2array_loop(xmlNodePtr a_node) {
 				xmlChar *z = xmlNodeGetContent(cur_node);
 				ZVAL_STRING(r, z, 1);
 				xmlFree(z);
+			} else {
+				continue;
 			}
 
 			php_xml2array_add_val(ret, a_node->name, r, cur_name);
+			php_printf("father change \n");
+			php_var_dump(&ret, 1 TSRMLS_CC);
 		}
 	}
 	return ret;
@@ -274,11 +278,25 @@ static void php_xml2array_get_properties (xmlNodePtr cur_node, zval * nodes, cha
  * @r 子zval
  * @son_name 子name
  */
-static void php_xml2array_add_val (zval *ret,const xmlChar *name, zval *r, char *son_key) {
+static void php_xml2array_add_val (zval *ret, const xmlChar *name, zval *r, char *son_key) {
 	zval **tmp = NULL;
 	char *key = (char *)name;//要插入的node 的key
+	php_printf("father name %s\n", key);
+	php_var_dump(&ret, 1 TSRMLS_CC);
 
-	if(son_key != NULL && zend_symtable_find(Z_ARRVAL(*ret),  key, strlen(key) + 1, (void**)&tmp) != FAILURE) {
+	php_printf("son name %s\n", son_key);
+	php_var_dump(&r, 1 TSRMLS_CC);
+
+	int has_tmp = zend_symtable_find(Z_ARRVAL(*ret),  key, strlen(key) + 1, (void**)&tmp);
+
+	if (has_tmp == SUCCESS && tmp != NULL && Z_TYPE_PP(tmp) == IS_ARRAY && son_key == NULL && Z_TYPE_P(r) == IS_STRING) {//avoid <xx></xx>,<xx></xx>
+		zval_ptr_dtor(&r);
+		return;
+	}
+
+	if(son_key != NULL && zend_symtable_find(Z_ARRVAL(*ret),  key, strlen(key) + 1, (void**)&tmp) != FAILURE
+		&& Z_TYPE_PP(tmp) == IS_ARRAY) {
+
 		zval **son_val = NULL;
 		zend_symtable_find(Z_ARRVAL_P(r),  son_key , strlen(son_key)+1, (void**)&son_val);
 
