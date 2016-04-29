@@ -12,7 +12,7 @@
    | obtain it through the world-wide-web, please send a note to          |
    | license@php.net so we can mail you a copy immediately.               |
    +----------------------------------------------------------------------+
-   | Author:                                                              |
+   | Author: fanhengguang@126.com                                         |
    +----------------------------------------------------------------------+
    */
 
@@ -35,9 +35,7 @@ static void php_xml2array_parse(zval* return_value, char * xml_str, long xml_len
 static void php_xml2array_add_val (zval *ret,const xmlChar *name, zval *r, char *son_key);
 static void php_xml2array_get_properties (xmlNodePtr cur_node, zval * nodes, char *name);
 static zval * init_zval_array();
-/* If you declare any globals in php_xml2array.h uncomment this:
-   ZEND_DECLARE_MODULE_GLOBALS(xml2array)
-   */
+
 
 /* True global resources - no need for thread safety here */
 static int le_xml2array;
@@ -47,7 +45,7 @@ static int le_xml2array;
  * Every user visible function must have an entry in xml2array_functions[].
  */
 	const zend_function_entry xml2array_functions[] = {
-		PHP_FE(xml2array,	NULL)		/* For testing, remove later. */
+		PHP_FE(xml2array,	NULL)
 		{NULL, NULL, NULL}	/* Must be the last line in xml2array_functions[] */
 	};
 /* }}} */
@@ -76,85 +74,34 @@ zend_module_entry xml2array_module_entry = {
 ZEND_GET_MODULE(xml2array)
 #endif
 
-	/* {{{ PHP_INI
-	*/
-	/* Remove comments and fill if you need to have entries in php.ini
-	   PHP_INI_BEGIN()
-	   STD_PHP_INI_ENTRY("xml2array.global_value",      "42", PHP_INI_ALL, OnUpdateLong, global_value, zend_xml2array_globals, xml2array_globals)
-	   STD_PHP_INI_ENTRY("xml2array.global_string", "foobar", PHP_INI_ALL, OnUpdateString, global_string, zend_xml2array_globals, xml2array_globals)
-	   PHP_INI_END()
-	   */
-	/* }}} */
 
-	/* {{{ php_xml2array_init_globals
-	*/
-	/* Uncomment this function if you have INI entries
-	   static void php_xml2array_init_globals(zend_xml2array_globals *xml2array_globals)
-	   {
-	   xml2array_globals->global_value = 0;
-	   xml2array_globals->global_string = NULL;
-	   }
-	   */
-	/* }}} */
-
-	/* {{{ PHP_MINIT_FUNCTION
-	*/
 PHP_MINIT_FUNCTION(xml2array)
 {
-	/* If you have INI entries, uncomment these lines 
-	   REGISTER_INI_ENTRIES();
-	   */
 	return SUCCESS;
 }
-/* }}} */
 
-/* {{{ PHP_MSHUTDOWN_FUNCTION
-*/
 PHP_MSHUTDOWN_FUNCTION(xml2array)
 {
-	/* uncomment this line if you have INI entries
-	   UNREGISTER_INI_ENTRIES();
-	   */
 	return SUCCESS;
 }
-/* }}} */
 
-/* Remove if there's nothing to do at request start */
-/* {{{ PHP_RINIT_FUNCTION
-*/
 PHP_RINIT_FUNCTION(xml2array)
 {
 	return SUCCESS;
 }
-/* }}} */
 
-/* Remove if there's nothing to do at request end */
-/* {{{ PHP_RSHUTDOWN_FUNCTION
-*/
 PHP_RSHUTDOWN_FUNCTION(xml2array)
 {
 	return SUCCESS;
 }
-/* }}} */
 
-/* {{{ PHP_MINFO_FUNCTION
-*/
 PHP_MINFO_FUNCTION(xml2array)
 {
 	php_info_print_table_start();
 	php_info_print_table_header(2, "xml2array support", "enabled");
 	php_info_print_table_end();
 
-	/* Remove comments if you have entries in php.ini
-	   DISPLAY_INI_ENTRIES();
-	   */
 }
-/* }}} */
-
-
-/* Remove the following function when you have succesfully modified config.m4
-   so that your module can be compiled into PHP, it exists only for testing
-   purposes. */
 
 PHP_FUNCTION(xml2array)
 {
@@ -199,7 +146,6 @@ static zval* php_xml2array_loop(xmlNodePtr a_node) {
 	xmlNodePtr cur_node;
 	zval * ret  = init_zval_array();
 	zval *r;
-	int i =0;
 
 	if (a_node->children == NULL) {
 		MAKE_STD_ZVAL(r);
@@ -222,8 +168,6 @@ static zval* php_xml2array_loop(xmlNodePtr a_node) {
 			}
 
 			php_xml2array_add_val(ret, a_node->name, r, cur_name);
-			php_printf("father change \n");
-			php_var_dump(&ret, 1 TSRMLS_CC);
 		}
 	}
 	return ret;
@@ -235,7 +179,6 @@ static zval * init_zval_array() {
 	array_init(ret);
 	return ret;
 }
-
 
 
 static void php_xml2array_get_properties (xmlNodePtr cur_node, zval * nodes, char *name) {
@@ -281,11 +224,6 @@ static void php_xml2array_get_properties (xmlNodePtr cur_node, zval * nodes, cha
 static void php_xml2array_add_val (zval *ret, const xmlChar *name, zval *r, char *son_key) {
 	zval **tmp = NULL;
 	char *key = (char *)name;//要插入的node 的key
-	php_printf("father name %s\n", key);
-	php_var_dump(&ret, 1 TSRMLS_CC);
-
-	php_printf("son name %s\n", son_key);
-	php_var_dump(&r, 1 TSRMLS_CC);
 
 	int has_tmp = zend_symtable_find(Z_ARRVAL(*ret),  key, strlen(key) + 1, (void**)&tmp);
 
@@ -306,9 +244,9 @@ static void php_xml2array_add_val (zval *ret, const xmlChar *name, zval *r, char
 
 		zval **tmp_val = NULL;
 		if (zend_symtable_find(Z_ARRVAL_P(*tmp),  son_key , strlen(son_key)+1, (void**)&tmp_val) != FAILURE) {//已经包含同名子元素
-			if (Z_TYPE_PP(tmp_val)  == IS_ARRAY && zend_hash_index_exists(Z_ARRVAL_PP(tmp_val), 0)) {//之前已经存储同名子zval
+			if (Z_TYPE_PP(tmp_val)  == IS_ARRAY && zend_hash_index_exists(Z_ARRVAL_PP(tmp_val), 0)) {
 				add_next_index_zval(*tmp_val, son_val_copy);
-			} else {//首次添加此名称的子zval
+			} else {
 				zval *son_arr = init_zval_array();
 				zval *copy;
 				MAKE_STD_ZVAL(copy);
